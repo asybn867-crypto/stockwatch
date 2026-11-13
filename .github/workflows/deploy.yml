@@ -26,17 +26,16 @@ jobs:
           test -f build/stockwatch/package.json
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p = Path("build/stockwatch/next.config.ts")
-          if p.exists():
-              s = p.read_text()
-              if 'output:' not in s:
-                  s, n = re.subn(r'(const\\s+nextConfig\\s*:\\s*NextConfig\\s*=\\s*\\{)', r'\\1\\n  output: "export",\\n  basePath: "/stockwatch",\\n  assetPrefix: "/stockwatch",\\n  images: { unoptimized: true },', s, count=1)
-                  if n != 1:
-                      raise SystemExit("Could not configure next.config.ts for static export")
-                  p.write_text(s)
-          else:
+          if not p.exists():
               raise SystemExit("next.config.ts missing from project archive")
+          s = p.read_text()
+          if 'output:' not in s:
+              needle = "const nextConfig: NextConfig = {"
+              if needle not in s:
+                  raise SystemExit("Unexpected next.config.ts format")
+              s = s.replace(needle, needle + '\\n  output: "export",\\n  basePath: "/stockwatch",\\n  assetPrefix: "/stockwatch",\\n  images: { unoptimized: true },', 1)
+              p.write_text(s)
           PY
       - name: Install dependencies
         working-directory: build/stockwatch
