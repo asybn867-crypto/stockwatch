@@ -19,36 +19,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Prepare project
-        run: |
-          mkdir -p build
-          unzip -q stockwatch-nextjs.zip -d build
-          test -f build/stockwatch/package.json
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("build/stockwatch/next.config.ts")
-          if not p.exists():
-              raise SystemExit("next.config.ts missing from project archive")
-          s = p.read_text()
-          if 'output:' not in s:
-              needle = "const nextConfig: NextConfig = {"
-              if needle not in s:
-                  raise SystemExit("Unexpected next.config.ts format")
-              s = s.replace(needle, needle + '\\n  output: "export",\\n  basePath: "/stockwatch",\\n  assetPrefix: "/stockwatch",\\n  images: { unoptimized: true },', 1)
-              p.write_text(s)
-          PY
-      - name: Install dependencies
-        working-directory: build/stockwatch
-        run: npm install
-      - name: Build static site
-        working-directory: build/stockwatch
-        run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Upload Pages artifact
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/stockwatch/out
-      - name: Deploy to GitHub Pages
+          path: site
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
